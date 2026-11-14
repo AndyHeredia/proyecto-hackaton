@@ -1,0 +1,518 @@
+
+/* ===== CONFIGURACIÓN GENERAL ===== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.welcome {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(
+    180deg,
+    #1265a5 0%,
+    #36a9cf 42%,
+    #a5e8cf 75%,
+    #62bd76 100%
+  );
+}
+
+/* ===== FONDO ===== */
+
+.background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(
+    150deg,
+    #1263a4 0%,
+    #258fbd 35%,
+    #a0e5dc 70%,
+    #b5e9a2 100%
+  );
+}
+
+.sky-glow {
+  position: absolute;
+  width: 70vw;
+  height: 70vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(180, 255, 230, 0.55),
+    transparent 70%
+  );
+  top: 5%;
+  left: 15%;
+  animation: glowMove 9s ease-in-out infinite alternate;
+}
+
+@keyframes glowMove {
+  from {
+    transform: translate(-5%, -5%) scale(0.9);
+  }
+  to {
+    transform: translate(10%, 8%) scale(1.2);
+  }
+}
+
+/* ===== NUBES ===== */
+
+.cloud {
+  position: absolute;
+  width: 180px;
+  height: 55px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 50px;
+  filter: blur(3px);
+  animation: cloudMove 35s linear infinite;
+}
+
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+
+.cloud::before {
+  width: 80px;
+  height: 80px;
+  top: -35px;
+  left: 30px;
+}
+
+.cloud::after {
+  width: 65px;
+  height: 65px;
+  top: -25px;
+  right: 25px;
+}
+
+.cloud-one {
+  top: 17%;
+  left: -200px;
+}
+
+.cloud-two {
+  top: 34%;
+  left: -350px;
+  transform: scale(0.7);
+  animation-delay: -15s;
+}
+
+@keyframes cloudMove {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: calc(100vw + 500px) 0;
+  }
+}
+
+/* ===== LÍNEAS DE DATOS ===== */
+
+.data-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.data-lines path {
+  fill: none;
+  stroke: rgba(183, 255, 244, 0.45);
+  stroke-width: 2;
+  stroke-dasharray: 12 15;
+  animation: lineFlow 15s linear infinite;
+}
+
+.data-lines path:nth-child(2) {
+  animation-duration: 20s;
+  animation-direction: reverse;
+}
+
+.data-lines path:nth-child(3) {
+  animation-duration: 25s;
+}
+
+@keyframes lineFlow {
+  to {
+    stroke-dashoffset: -300;
+  }
+}
+
+/* ===== PARTÍCULAS ===== */
+
+.particle {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d9fff1;
+  box-shadow: 0 0 12px 3px rgba(173, 255, 236, 0.8);
+  animation: particleFloat var(--duration) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-35px) scale(1.3);
+    opacity: 1;
+  }
+}
+
+/* ===== HOJAS ===== */
+
+.floating-leaf {
+  position: absolute;
+  color: #b9f58b;
+  font-size: 35px;
+  opacity: 0.75;
+  animation: leafFloat 7s ease-in-out infinite;
+}
+
+.leaf-one {
+  left: 12%;
+  top: 35%;
+}
+
+.leaf-two {
+  right: 15%;
+  top: 25%;
+  animation-delay: -3s;
+  font-size: 25px;
+}
+
+.leaf-three {
+  right: 25%;
+  bottom: 20%;
+  animation-delay: -5s;
+  font-size: 30px;
+}
+
+@keyframes leafFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-25px) rotate(25deg);
+  }
+}
+
+/* ===== PAISAJE ===== */
+
+.landscape {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 55%;
+  min-height: 280px;
+}
+
+/* ===== CONTENIDO ===== */
+
+.welcome-content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 35px 20px 20px;
+}
+
+/* ===== LOGO ===== */
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 45px;
+  animation: appear 1s ease;
+}
+
+.brand-icon {
+  width: 85px;
+  height: 85px;
+  filter: drop-shadow(0 5px 10px rgba(0, 70, 70, 0.2));
+}
+
+.brand-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-name {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #073b56;
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+/* ===== TARJETAS ===== */
+
+.welcome-options {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 35px;
+  width: 100%;
+  max-width: 850px;
+}
+
+.experience-card {
+  position: relative;
+  width: 50%;
+  max-width: 390px;
+  min-height: 320px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 30px;
+  padding: 30px 25px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 15px 40px rgba(0, 57, 82, 0.15);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  animation: cardAppear 0.9s ease both;
+}
+
+.experienced {
+  background: linear-gradient(
+    145deg,
+    rgba(222, 244, 255, 0.93),
+    rgba(126, 201, 250, 0.83)
+  );
+}
+
+.beginner {
+  background: linear-gradient(
+    145deg,
+    rgba(228, 255, 236, 0.93),
+    rgba(146, 232, 170, 0.85)
+  );
+  animation-delay: 0.2s;
+}
+
+.experience-card:hover {
+  transform: translateY(-12px) scale(1.025);
+  box-shadow: 0 25px 50px rgba(0, 50, 65, 0.25);
+  border-color: white;
+}
+
+.experience-card:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: 5px;
+}
+
+/* ===== ICONOS ===== */
+
+.card-icon {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 15px;
+  transition: transform 0.4s ease;
+}
+
+.card-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.experience-card:hover .card-icon {
+  transform: scale(1.1) rotate(-4deg);
+}
+
+/* ===== TEXTOS DE TARJETAS ===== */
+
+.experience-card h2 {
+  color: #10405e;
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.beginner h2 {
+  color: #145a43;
+}
+
+.experience-card p {
+  color: #315a70;
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 260px;
+  margin-bottom: 22px;
+}
+
+.beginner p {
+  color: #31644c;
+}
+
+/* ===== FLECHAS ===== */
+
+.card-arrow {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 30px;
+  background: #1474a8;
+  transition: all 0.3s ease;
+}
+
+.beginner .card-arrow {
+  background: #22976a;
+}
+
+.experience-card:hover .card-arrow {
+  transform: translateX(5px);
+}
+
+/* ===== PIE DE PÁGINA ===== */
+
+.principal-footer {
+  margin-top: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: #073d50;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.4);
+  animation: appear 1.2s ease;
+}
+
+.principal-footer span {
+  font-size: 22px;
+}
+
+/* ===== ANIMACIONES DE ENTRADA ===== */
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(35px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 650px) {
+  .principal-content {
+    padding: 25px 18px;
+  }
+
+  .brand {
+    margin-bottom: 25px;
+  }
+
+  .brand-icon {
+    width: 65px;
+    height: 65px;
+  }
+
+  .brand-name {
+    font-size: 23px;
+  }
+
+  .principal-options {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .experience-card {
+    width: 100%;
+    max-width: 350px;
+    min-height: 235px;
+    padding: 18px;
+  }
+
+  .card-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 8px;
+  }
+
+  .experience-card h2 {
+    font-size: 23px;
+  }
+
+  .experience-card p {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .card-arrow {
+    width: 38px;
+    height: 38px;
+    font-size: 24px;
+  }
+
+  .principal-footer {
+    margin-top: 25px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .landscape {
+    height: 42%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
