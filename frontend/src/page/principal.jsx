@@ -1,8 +1,11 @@
 
 import React from "react";
 import "./principal.css";
+import { useNavigate } from "react-router-dom";
+
 
 function principal({ onSelect }) {
+  const navigate = useNavigate();
   const handleSelect = (experience) => {
     if (onSelect) {
       onSelect(experience);
@@ -152,7 +155,7 @@ function principal({ onSelect }) {
           {/* Opción experiencia */}
           <button
             className="experience-card experienced"
-            onClick={() => handleSelect("experienced")}
+            onClick={() => navigate("/con-experiencia")}
           >
             <div className="card-icon">
               <svg viewBox="0 0 100 100" fill="none">

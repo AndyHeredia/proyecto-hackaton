@@ -1,0 +1,67 @@
+
+{
+  "ubicacion": {
+    "municipio": "Cochabamba",
+    "departamento": "Cochabamba",
+    "latitud": -17.3935,
+    "longitud": -66.1570
+  },
+  "indicadores": {
+    "humedad": 65,
+    "precipitaciones": 12.5,
+    "humedadSuelo": 48,
+    "estresTermico": "Moderado"
+  },
+  "temperaturas": [
+    {
+      "fecha": "08/11",
+      "temperatura": 21
+    },
+    {
+      "fecha": "09/11",
+      "temperatura": 23
+    },
+    {
+      "fecha": "10/11",
+      "temperatura": 25
+    },
+    {
+      "fecha": "11/11",
+      "temperatura": 22
+    },
+    {
+      "fecha": "12/11",
+      "temperatura": 20
+    },
+    {
+      "fecha": "13/11",
+      "temperatura": 24
+    },
+    {
+      "fecha": "14/11",
+      "temperatura": 26
+    }
+  ],
+  "alertas": [
+    {
+      "titulo": "Humedad del suelo moderada",
+      "descripcion": "La humedad del suelo podría ser insuficiente para cultivos que requieren abundante agua.",
+      "nivel": "medio"
+    },
+    {
+      "titulo": "Temperaturas elevadas",
+      "descripcion": "Se esperan temperaturas relativamente altas que podrían aumentar la evaporación del agua.",
+      "nivel": "bajo"
+    },
+    {
+      "titulo": "Riesgo de déficit hídrico",
+      "descripcion": "Se recomienda supervisar la disponibilidad de agua para el próximo ciclo de cultivo.",
+      "nivel": "alto"
+    }
+  ],
+  "recomendacion": {
+    "cultivo": "Maíz",
+    "descripcion": "Se recomienda considerar el cultivo de maíz bajo un manejo adecuado del riego.",
+    "motivo": "Las condiciones de humedad y temperatura del escenario de prueba podrían ser compatibles con este cultivo, siempre que se controle la disponibilidad de agua."
+  }
+}
