@@ -6,12 +6,11 @@
 ## Instalación y ejecución rápida
 
 1. **Clonar el repositorio:**
-   git clone <URL_DE_TU_REPO>
+   git clone <URL_DEL_REPO>
    cd proyecto-hackaton
 
 2. **Levantar el Backend:**
    cd backend
-   cp .env.example .env
    npm install
    npm run dev
 
