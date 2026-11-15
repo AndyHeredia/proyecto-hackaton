@@ -1,10 +1,9 @@
-
 import React from "react";
 import "./principal.css";
 import { useNavigate } from "react-router-dom";
 
 
-function principal({ onSelect }) {
+function Principal({ onSelect }) {
   const navigate = useNavigate();
   const handleSelect = (experience) => {
     if (onSelect) {
@@ -196,7 +195,7 @@ function principal({ onSelect }) {
           {/* Opción principiante */}
           <button
             className="experience-card beginner"
-            onClick={() => handleSelect("beginner")}
+            onClick={() => navigate("/sin-experiencia")}
           >
             <div className="card-icon">
               <svg viewBox="0 0 100 100" fill="none">
@@ -256,4 +255,4 @@ function principal({ onSelect }) {
   );
 }
 
-export default principal;
+export default Principal;
