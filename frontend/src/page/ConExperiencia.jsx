@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -10,11 +10,8 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./ConExperiencia.css";
-import datosAgricolas from "../data/datosAgricolas.json";
 
-
-// Cambia esta URL cuando tengas definida la ruta definitiva del backend.
-const API_URL = "http://localhost:5000/api/agricultura/analisis";
+const API_URL = "http://localhost:5000/api/nasa/clima";
 
 // Coordenadas iniciales: Cochabamba
 const CENTRO = [-17.3935, -66.1570];
@@ -28,24 +25,84 @@ const markerIcon = new L.Icon({
   iconAnchor: [12, 41]
 });
 
+// Genera un periodo de los últimos 7 días completos
+function getDateRange() {
+  const end = new Date();
+  end.setDate(end.getDate() - 1);
+
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}${month}${day}`;
+  };
+
+  return {
+    start: formatDate(start),
+    end: formatDate(end)
+  };
+}
+
+// Formatea fechas YYYYMMDD
+function formatDate(date) {
+  if (!date || date.length !== 8) return date;
+
+  return `${date.substring(6, 8)}/${date.substring(4, 6)}/${date.substring(0, 4)}`;
+}
+
+// Calcula el promedio de los valores diarios
+function calculateAverage(data) {
+  if (!data) return null;
+
+  const values = Object.values(data).filter(
+    value => typeof value === "number" && value !== -999
+  );
+
+  if (values.length === 0) return null;
+
+  const average = values.reduce((total, value) => total + value, 0) / values.length;
+
+  return Number(average.toFixed(2));
+}
+
 // Actualiza el centro del mapa
 function MapUpdater({ position }) {
   const map = useMap();
 
-  if (position) {
-    map.setView(position, 13);
-  }
+  useEffect(() => {
+    if (position) {
+      map.setView(position, 13);
+    }
+  }, [map, position]);
 
   return null;
 }
 
 // Formatea valores recibidos
 function formatValue(value, unit = "") {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === "" || Number.isNaN(value)) {
     return "--";
   }
 
-  return `${value}${unit}`;
+  const formatted =
+    typeof value === "number"
+      ? Number(value.toFixed(2))
+      : value;
+
+  return `${formatted}${unit}`;
+}
+
+// Convierte humedad del suelo de fracción a porcentaje
+function formatSoilHumidity(value) {
+  if (typeof value !== "number") return null;
+
+  return value >= 0 && value <= 1
+    ? Number((value * 100).toFixed(1))
+    : value;
 }
 
 // Tarjeta de indicadores
@@ -71,12 +128,12 @@ function TemperatureChart({ data }) {
     return (
       <div className="chart-empty">
         <i className="bi bi-thermometer-half"></i>
-        <p>Ingresa las coordenadas para consultar el registro de temperaturas.</p>
+        <p>No hay registros de temperatura disponibles.</p>
       </div>
     );
   }
 
-  const values = data.map(item => Number(item.temperatura));
+  const values = data.map(item => Number(item.valor));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
@@ -92,7 +149,7 @@ function TemperatureChart({ data }) {
     <div className="temperature-chart">
       <div className="chart-summary">
         <span>Temperatura registrada</span>
-        <strong>{min}°C – {max}°C</strong>
+        <strong>{min.toFixed(1)}°C – {max.toFixed(1)}°C</strong>
       </div>
 
       <svg viewBox="0 0 500 190" preserveAspectRatio="none">
@@ -134,22 +191,48 @@ function TemperatureChart({ data }) {
 
       <div className="chart-labels">
         {data.map((item, index) => (
-          <span key={index}>{item.fecha}</span>
+          <span key={index}>{formatDate(item.fecha)}</span>
         ))}
       </div>
     </div>
   );
 }
 
+// Obtiene el nombre de una semilla sin asumir una única columna
+function getSeedName(seed) {
+  return (
+    seed.nombre ||
+    seed.nombre_semilla ||
+    seed.variedad ||
+    seed.tipo_semilla ||
+    seed.semilla ||
+    "Semilla recomendada"
+  );
+}
+
+// Muestra los rangos de una semilla cuando están disponibles
+function getSeedRange(seed, minField, maxField, unit = "") {
+  const min = seed[minField];
+  const max = seed[maxField];
+
+  if (min === null && max === null) return null;
+  if (min === undefined && max === undefined) return null;
+
+  const formatNumber = (value) => {
+    if (value === null || value === undefined) return "No definido";
+    return `${value}${unit}`;
+  };
+
+  return `${formatNumber(min)} – ${formatNumber(max)}`;
+}
+
 // Componente principal
 function ConExperiencia() {
-  const [datos, setDatos] = useState(datosAgricolas);
+  const [latitud, setLatitud] = useState("-17.3935");
+  const [longitud, setLongitud] = useState("-66.1570");
 
-  const [latitud, setLatitud] = useState("");
-  const [longitud, setLongitud] = useState("");
-
-  //const [datos, setDatos] = useState(null);
-  const [position, setPosition] = useState(null);
+  const [datos, setDatos] = useState(null);
+  const [position, setPosition] = useState(CENTRO);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -158,7 +241,6 @@ function ConExperiencia() {
     e.preventDefault();
 
     setError("");
-    setDatos(null);
 
     const lat = Number(latitud);
     const lon = Number(longitud);
@@ -176,18 +258,28 @@ function ConExperiencia() {
     }
 
     setLoading(true);
+    setDatos(null);
     setPosition([lat, lon]);
 
     try {
-      const response = await fetch(
-        `${API_URL}?latitud=${lat}&longitud=${lon}`
-      );
+      const { start, end } = getDateRange();
 
-      if (!response.ok) {
-        throw new Error("No se pudieron obtener los datos del terreno.");
+      const params = new URLSearchParams({
+        lat: String(lat),
+        lon: String(lon),
+        start,
+        end
+      });
+
+      const response = await fetch(`${API_URL}?${params.toString()}`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error || "No se pudieron obtener los datos del terreno."
+        );
       }
 
-      const result = await response.json();
       setDatos(result);
 
     } catch (err) {
@@ -197,10 +289,36 @@ function ConExperiencia() {
     }
   };
 
-  const metricas = datos?.indicadores || {};
-  const alertas = datos?.alertas || [];
-  const temperaturas = datos?.temperaturas || [];
-  const recomendacion = datos?.recomendacion || null;
+  // Datos recibidos del backend
+  const analisis = datos?.analisisClima || {};
+  const rawData = datos?.datosCrudosNASA || {};
+
+  const semillasRecomendadas = datos?.semillasRecomendadas || [];
+
+  // Indicadores ambientales
+  const temperaturaPromedio = analisis.temperaturaC ?? null;
+
+  const humedadRelativa = calculateAverage(rawData.RH2M);
+
+  const precipitacionPromedio = calculateAverage(rawData.PRECTOTCORR);
+
+  const vientoPromedio = calculateAverage(rawData.WS2M);
+
+  const humedadSuelo = formatSoilHumidity(
+    typeof analisis.humedadSueloPromedio === "number"
+      ? analisis.humedadSueloPromedio
+      : null
+  );
+
+  // Datos diarios para el gráfico
+  const temperaturas = rawData.T2M
+    ? Object.entries(rawData.T2M)
+        .filter(([fecha, valor]) => valor !== -999)
+        .map(([fecha, valor]) => ({
+          fecha,
+          valor
+        }))
+    : [];
 
   return (
     <main className="agro-dashboard">
@@ -235,8 +353,8 @@ function ConExperiencia() {
             <h2>Conoce las condiciones de tu cultivo</h2>
 
             <p>
-              Consulta información ambiental y evalúa los posibles
-              riesgos para tu producción.
+              Consulta información ambiental y evalúa las condiciones
+              de tu terreno para orientar tus decisiones agrícolas.
             </p>
           </div>
         </div>
@@ -265,6 +383,7 @@ function ConExperiencia() {
                 placeholder="Ej. -17.3935"
                 value={latitud}
                 onChange={(e) => setLatitud(e.target.value)}
+                required
               />
             </div>
 
@@ -278,6 +397,7 @@ function ConExperiencia() {
                 placeholder="Ej. -66.1570"
                 value={longitud}
                 onChange={(e) => setLongitud(e.target.value)}
+                required
               />
             </div>
 
@@ -297,6 +417,14 @@ function ConExperiencia() {
               {error}
             </div>
           )}
+
+          {datos && (
+            <p className="location-result">
+              <i className="bi bi-calendar3"></i>
+              Periodo consultado: {formatDate(datos.periodo?.start)} al{" "}
+              {formatDate(datos.periodo?.end)}
+            </p>
+          )}
         </section>
 
         <div className="dashboard-grid">
@@ -314,34 +442,42 @@ function ConExperiencia() {
 
                 <IndicatorCard
                   icon="bi-droplet-half"
-                  title="Humedad"
-                  value={metricas.humedad}
+                  title="Humedad relativa"
+                  value={humedadRelativa}
                   unit="%"
-                  description="Humedad ambiental"
+                  description="Humedad del aire promedio"
                 />
 
                 <IndicatorCard
                   icon="bi-cloud-rain"
                   title="Precipitaciones"
-                  value={metricas.precipitaciones}
+                  value={precipitacionPromedio}
                   unit=" mm"
-                  description="Precipitación registrada"
+                  description="Promedio diario de precipitación"
                 />
 
                 <IndicatorCard
                   icon="bi-moisture"
                   title="Humedad del suelo"
-                  value={metricas.humedadSuelo}
+                  value={humedadSuelo}
                   unit="%"
-                  description="Contenido de agua"
+                  description="Humedad superficial del suelo"
                 />
 
                 <IndicatorCard
                   icon="bi-thermometer-half"
-                  title="Estrés térmico"
-                  value={metricas.estresTermico}
-                  unit=""
-                  description="Nivel de estrés"
+                  title="Temperatura promedio"
+                  value={temperaturaPromedio}
+                  unit="°C"
+                  description="Temperatura del aire"
+                />
+
+                <IndicatorCard
+                  icon="bi-wind"
+                  title="Velocidad del viento"
+                  value={vientoPromedio}
+                  unit=" m/s"
+                  description="Promedio diario del viento"
                 />
 
               </div>
@@ -356,53 +492,39 @@ function ConExperiencia() {
 
                 <div>
                   <h3>Alertas agrícolas</h3>
-                  <p>Condiciones que podrían poner en riesgo tus cultivos.</p>
+                  <p>
+                    Información para tener en cuenta al evaluar tu terreno.
+                  </p>
                 </div>
               </div>
 
               <div className="alerts-container">
-
                 {!datos && !loading && (
                   <div className="empty-state">
                     <i className="bi bi-shield-check"></i>
-                    <p>Las alertas aparecerán después de analizar tu terreno.</p>
+                    <p>
+                      Consulta tu terreno para visualizar sus condiciones ambientales.
+                    </p>
                   </div>
                 )}
 
                 {loading && (
                   <div className="empty-state">
                     <i className="bi bi-arrow-repeat"></i>
-                    <p>Analizando posibles riesgos...</p>
+                    <p>Analizando las condiciones ambientales...</p>
                   </div>
                 )}
 
-                {datos && alertas.length === 0 && (
-                  <div className="empty-state success-state">
-                    <i className="bi bi-check-circle"></i>
-                    <p>No se reportaron alertas para los datos consultados.</p>
+                {datos && (
+                  <div className="empty-state">
+                    <i className="bi bi-info-circle"></i>
+                    <p>
+                      El análisis actual proporciona datos climáticos y
+                      recomendaciones de semillas, pero todavía no genera
+                      alertas agrícolas automáticas.
+                    </p>
                   </div>
                 )}
-
-                {alertas.map((alerta, index) => (
-                  <article
-                    key={index}
-                    className={`alert-item ${String(alerta.nivel || "").toLowerCase()}`}
-                  >
-                    <i className="bi bi-exclamation-circle"></i>
-
-                    <div>
-                      <strong>{alerta.titulo}</strong>
-                      <p>{alerta.descripcion}</p>
-                    </div>
-
-                    {alerta.nivel && (
-                      <span className="alert-level">
-                        {alerta.nivel}
-                      </span>
-                    )}
-                  </article>
-                ))}
-
               </div>
             </section>
 
@@ -420,14 +542,14 @@ function ConExperiencia() {
 
                 <div>
                   <h3>Registro de temperaturas</h3>
-                  <p>Comportamiento de la temperatura en el tiempo.</p>
+                  <p>Comportamiento diario de la temperatura.</p>
                 </div>
               </div>
 
               <TemperatureChart data={temperaturas} />
             </section>
 
-            {/* Recomendación */}
+            {/* Recomendaciones de semillas */}
             <section className="recommendation-section dashboard-panel">
               <div className="section-heading">
                 <div className="heading-icon recommendation-icon">
@@ -435,34 +557,84 @@ function ConExperiencia() {
                 </div>
 
                 <div>
-                  <h3>Recomendación de cultivo</h3>
-                  <p>Alternativas según las condiciones del terreno.</p>
+                  <h3>Semillas recomendadas</h3>
+                  <p>
+                    Alternativas compatibles con las condiciones climáticas.
+                  </p>
                 </div>
               </div>
 
               <div className="recommendation-content">
-                {!recomendacion ? (
+                {!datos && (
                   <div className="empty-state">
                     <i className="bi bi-lightbulb"></i>
-                    <p>Las recomendaciones aparecerán después del análisis.</p>
+                    <p>
+                      Las recomendaciones aparecerán después de analizar tu terreno.
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    <h4>{recomendacion.cultivo}</h4>
-                    <p>{recomendacion.descripcion}</p>
+                )}
 
-                    {recomendacion.motivo && (
-                      <div className="recommendation-reason">
-                        <strong>¿Por qué?</strong>
-                        <p>{recomendacion.motivo}</p>
-                      </div>
-                    )}
-                  </>
+                {datos && semillasRecomendadas.length === 0 && (
+                  <div className="empty-state">
+                    <i className="bi bi-info-circle"></i>
+                    <p>
+                      No se encontraron semillas compatibles con las
+                      condiciones climáticas consultadas.
+                    </p>
+                  </div>
+                )}
+
+                {datos && semillasRecomendadas.length > 0 && (
+                  <div className="seeds-list">
+                    {semillasRecomendadas.map((seed, index) => {
+                      const temperatureRange = getSeedRange(
+                        seed,
+                        "temp_min_c",
+                        "temp_max_c",
+                        "°C"
+                      );
+
+                      const soilMin = seed.humedad_suelo_min_p;
+                      const soilMax = seed.humedad_suelo_max_p;
+
+                      const soilRange =
+                        soilMin !== null && soilMin !== undefined ||
+                        soilMax !== null && soilMax !== undefined
+                          ? `${soilMin ?? "No definido"} – ${soilMax ?? "No definido"}`
+                          : null;
+
+                      return (
+                        <article className="seed-item" key={seed.id || index}>
+                          <div className="seed-icon">
+                            <i className="bi bi-flower1"></i>
+                          </div>
+
+                          <div className="seed-info">
+                            <h4>{getSeedName(seed)}</h4>
+
+                            {temperatureRange && (
+                              <p>
+                                <strong>Temperatura:</strong>{" "}
+                                {temperatureRange}
+                              </p>
+                            )}
+
+                            {soilRange && (
+                              <p>
+                                <strong>Humedad del suelo:</strong>{" "}
+                                {soilRange}
+                              </p>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </section>
 
-            {/* MAPA: sin título adicional */}
+            {/* MAPA */}
             <section className="map-section">
               <MapContainer
                 center={position || CENTRO}
@@ -481,6 +653,7 @@ function ConExperiencia() {
                       position={position}
                       icon={markerIcon}
                     />
+
                     <MapUpdater position={position} />
                   </>
                 )}
